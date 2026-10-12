@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An official incident report apologizing to Luan and Hai Sex for being late.">
+<title>Sorry, Luan &amp; Hai Sex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: a parody incident post-mortem: caution-yellow ground, white "report" sheets, red alarm stamps. Deliberately single-theme. */
+:root {
+  --caution: #FFD52E;
+  --ink: #16140F;
+  --sheet: #FFFDF6;
+  --alarm: #E3342F;
+  --ok: #1E8E4E;
+  --muted: #5E5843;
+  --line: #16140F;
+  --display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --body: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+html, body { background: var(--caution); color: var(--ink); }
+body { margin: 0; font-family: var(--body); font-size: 17px; line-height: 1.55; overflow-x: hidden; }
+
+.tape {
+  height: 26px;
+  background: repeating-linear-gradient(-45deg, var(--ink) 0 18px, var(--caution) 18px 36px);
+  border-block: 3px solid var(--ink);
+}
+.tape.moving { animation: tape 1.2s linear infinite; background-size: 50.9px 100%; }
+@keyframes tape { to { background-position: 50.9px 0; } }
+
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; display: grid; gap: 40px; }
+
+.label { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+
+/* hero */
+.hero { display: grid; gap: 18px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.pill { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border: 2px solid var(--ink); background: var(--sheet); }
+.pill.sev { background: var(--alarm); color: var(--sheet); border-color: var(--alarm); animation: blink 1s steps(2) infinite; }
+.pill.sev.resolved { background: var(--ok); border-color: var(--ok); animation: none; }
+@keyframes blink { 50% { opacity: .55; } }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(42px, 9vw, 92px); line-height: .92; letter-spacing: -.03em; margin: 0; text-wrap: balance; }
+h1 .names { display: inline; background: var(--ink); color: var(--caution); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.lede { font-size: clamp(18px, 2.4vw, 22px); max-width: 38ch; margin: 0; }
+
+/* sheets */
+.sheet { background: var(--sheet); border: 3px solid var(--line); box-shadow: 8px 8px 0 var(--ink); padding: clamp(20px, 4vw, 36px); display: grid; gap: 18px; min-width: 0; }
+.sheet h2 { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 4.4vw, 38px); line-height: 1.05; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.sheet-head { display: grid; gap: 6px; }
+.sheet-head .label { color: var(--alarm); }
+p { margin: 0; }
+.fine { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 3px solid var(--ink); }
+.stat { padding: 16px; display: grid; gap: 4px; align-content: start; border-right: 3px solid var(--ink); }
+.stat:last-child { border-right: 0; }
+.stat .num { font-family: var(--display); font-weight: 800; font-size: clamp(32px, 5vw, 46px); line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .num.red { color: var(--alarm); }
+.stat .label { font-size: 11px; color: var(--muted); }
+@media (max-width: 680px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(2) { border-right: 0; }
+  .stat:nth-child(-n+2) { border-bottom: 3px solid var(--ink); }
+}
+.guilt { display: grid; gap: 8px; }
+.guilt-row { display: flex; justify-content: space-between; gap: 12px; }
+.bar { height: 28px; border: 3px solid var(--ink); background: var(--sheet); position: relative; overflow: hidden; }
+.bar-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: repeating-linear-gradient(-45deg, var(--alarm) 0 12px, #c82a25 12px 24px); transition: width 2.4s cubic-bezier(.2,.8,.2,1); }
+.bar.overflow { animation: shake .35s ease-in-out 3; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+/* timeline */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; padding: 12px 0; border-top: 2px dashed #cfc7a6; }
+.timeline li:first-child { border-top: 0; }
+.timeline time { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+.timeline li.bad time { color: var(--alarm); }
+.timeline strong { font-weight: 800; }
+
+/* whys */
+.whys { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: why; }
+.whys li { counter-increment: why; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.whys li::before { content: "Y" counter(why); font-family: var(--mono); font-weight: 700; font-size: 13px; background: var(--ink); color: var(--caution); text-align: center; padding: 2px 0; }
+.whys .q { font-weight: 600; }
+.whys .a { color: var(--muted); }
+.verdict { font-family: var(--mono); font-size: 14px; border-left: 6px solid var(--alarm); padding: 10px 14px; background: #fff1ef; }
+
+/* victims */
+.victims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 680px) { .victims { grid-template-columns: minmax(0, 1fr); } }
+.victim { background: var(--sheet); border: 3px solid var(--ink); box-shadow: 8px 8px 0 var(--ink); display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.victim-top { background: var(--ink); color: var(--caution); padding: 18px 20px; display: flex; align-items: center; gap: 14px; }
+.avatar { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 50%; background: var(--caution); color: var(--ink); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 22px; border: 3px solid var(--caution); }
+.victim-name { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 4vw, 36px); line-height: 1; letter-spacing: -.02em; }
+.victim-role { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .8; margin-top: 4px; }
+.victim dl { margin: 0; padding: 18px 20px 22px; display: grid; gap: 12px; }
+.victim dt { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.victim dd { margin: 2px 0 0; }
+
+/* compensation */
+.menu { display: grid; gap: 0; border: 3px solid var(--ink); }
+.item { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-top: 2px solid var(--ink); cursor: pointer; }
+.item:first-child { border-top: 0; }
+.item:hover { background: #fff6cc; }
+.item input { width: 22px; height: 22px; accent-color: var(--ink); margin: 0; cursor: pointer; }
+.item input:focus-visible { outline: 3px solid var(--alarm); outline-offset: 2px; }
+.item .what { font-weight: 600; }
+.item .what small { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
+.item .price { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.item.soldout { cursor: not-allowed; background: repeating-linear-gradient(-45deg, transparent 0 10px, #f1ecd6 10px 20px); }
+.item.soldout .what span { text-decoration: line-through; text-decoration-thickness: 2px; }
+.item.soldout .price { color: var(--alarm); }
+.total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; background: var(--ink); color: var(--caution); padding: 14px 16px; }
+.total .sum { font-family: var(--display); font-weight: 800; font-size: 28px; font-variant-numeric: tabular-nums; }
+.wallet { font-family: var(--mono); font-size: 13px; min-height: 1.5em; }
+
+/* forgive */
+.forgive { text-align: left; }
+.who { display: flex; flex-wrap: wrap; gap: 8px; }
+.who button { font: 700 14px/1 var(--mono); letter-spacing: .04em; padding: 10px 14px; border: 3px solid var(--ink); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.who button[aria-pressed="true"] { background: var(--ink); color: var(--caution); }
+.who button:focus-visible, .btn:focus-visible { outline: 3px solid var(--alarm); outline-offset: 3px; }
+.arena { position: relative; min-height: 230px; border: 3px dashed var(--ink); background: repeating-linear-gradient(0deg, transparent 0 23px, #f1ecd6 23px 24px); display: grid; place-items: center; overflow: hidden; touch-action: manipulation; }
+.arena-q { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 5vw, 40px); text-align: center; padding: 18px 16px 0; align-self: start; line-height: 1.1; text-wrap: balance; }
+.btn { font-family: var(--display); font-weight: 800; border: 3px solid var(--ink); cursor: pointer; box-shadow: 5px 5px 0 var(--ink); transition: transform .15s ease, box-shadow .15s ease; }
+.btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+.btn-yes { position: absolute; left: 22%; top: 58%; transform-origin: center; background: var(--ok); color: var(--sheet); font-size: 24px; padding: 12px 30px; z-index: 2; }
+.btn-no { position: absolute; left: 60%; top: 58%; background: var(--sheet); color: var(--ink); font-size: 18px; padding: 10px 20px; z-index: 1; transition: left .22s ease, top .22s ease, transform .15s ease, box-shadow .15s ease, font-size .2s ease; }
+.no-log { font-family: var(--mono); font-size: 13px; color: var(--muted); min-height: 1.5em; }
+
+/* certificate */
+.cert { position: relative; background: var(--sheet); border: 3px solid var(--ink); outline: 3px solid var(--ink); outline-offset: 6px; padding: clamp(24px, 5vw, 44px); display: grid; gap: 14px; text-align: center; margin: 10px; }
+.cert h3 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 5vw, 44px); margin: 0; line-height: 1; letter-spacing: -.02em; }
+.cert .big { font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3.5vw, 30px); }
+.cert .terms { font-family: var(--mono); font-size: 12px; color: var(--muted); max-width: 52ch; margin: 0 auto; }
+.stamp { position: absolute; right: 6%; top: 10%; font-family: var(--mono); font-weight: 700; font-size: clamp(16px, 3vw, 24px); color: var(--ok); border: 4px solid var(--ok); padding: 6px 12px; transform: rotate(-14deg) scale(2.4); opacity: 0; letter-spacing: .1em; pointer-events: none; }
+.stamp.slam { animation: slam .45s cubic-bezier(.3,1.6,.5,1) .2s forwards; }
+@keyframes slam { to { opacity: .9; transform: rotate(-14deg) scale(1); } }
+@media (max-width: 520px) { .stamp { position: static; justify-self: center; } }
+
+/* action items */
+.actions { width: 100%; border-collapse: collapse; font-size: 15px; }
+.actions th { text-align: left; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 0 12px 8px 0; border-bottom: 3px solid var(--ink); }
+.actions td { padding: 12px 12px 12px 0; border-bottom: 2px dashed #cfc7a6; vertical-align: top; }
+.actions td:last-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+
+.sign { font-family: var(--display); font-size: 22px; font-weight: 600; }
+footer.fine { text-align: center; }
+
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; width: 100%; height: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .stamp { opacity: .9; transform: rotate(-14deg); }
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="tape moving" aria-hidden="true"></div>
+
+<main class="wrap">
+
+  <header class="hero">
+    <div class="meta">
+      <span class="pill sev" id="sevPill">SEV-1 · Friendship degraded</span>
+      <span class="pill">Incident #001</span>
+      <span class="pill">Filed by: the late one</span>
+    </div>
+    <h1>I'm sorry, <span class="names">Luan&nbsp;&amp;&nbsp;Hai&nbsp;Sex</span></h1>
+    <p class="lede">This morning I was late and left you two holding the project. This is the official post-mortem. Management (me) takes full responsibility.</p>
+  </header>
+
+  <section class="sheet" aria-labelledby="impact-h">
+    <div class="sheet-head">
+      <span class="label">Section 1 · Impact</span>
+      <h2 id="impact-h">How bad was it?</h2>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="num">2</span><span class="label">Friends let down (100% of them)</span></div>
+      <div class="stat"><span class="num">7</span><span class="label">Excuses I prepared</span></div>
+      <div class="stat"><span class="num red">0</span><span class="label">Excuses that were good</span></div>
+      <div class="stat"><span class="num">1</span><span class="label">Project carried without me</span></div>
+    </div>
+    <div class="guilt">
+      <div class="guilt-row"><span class="label">Guilt level</span><span class="label" id="guiltPct">0%</span></div>
+      <div class="bar" id="guiltBar"><div class="bar-fill" id="guiltFill"></div></div>
+      <p class="fine" id="guiltNote">Calculating guilt…</p>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="tl-h">
+    <div class="sheet-head">
+      <span class="label">Section 2 · Timeline</span>
+      <h2 id="tl-h">What happened this morning</h2>
+      <p class="fine">Reconstructed from memory and vibes. Times approximate.</p>
+    </div>
+    <ol class="timeline">
+      <li><time>Alarm 1</time><div>Alarm goes off. I dismiss it with full confidence that I'll get up in a second.</div></li>
+      <li><time>Snooze</time><div>"Five more minutes." <strong>This was a lie.</strong> I knew it was a lie.</div></li>
+      <li class="bad"><time>Snooze ×4</time><div>Had a dream that I arrived on time. Felt amazing. Did not happen.</div></li>
+      <li class="bad"><time>Uh oh</time><div>Opened my eyes. Checked the clock. The sun had absolutely moved.</div></li>
+      <li><time>Panic</time><div>Typed "omw" while still lying down. Technically I was on my way to standing up.</div></li>
+      <li class="bad"><time>Too late</time><div><strong>Luan</strong> and <strong>Hai Sex</strong> did the work. Without me. Like legends.</div></li>
+    </ol>
+  </section>
+
+  <section class="sheet" aria-labelledby="why-h">
+    <div class="sheet-head">
+      <span class="label">Section 3 · Root cause</span>
+      <h2 id="why-h">The 5 Whys</h2>
+    </div>
+    <ol class="whys">
+      <li><div><span class="q">Why was I late?</span> <span class="a">I woke up late.</span></div></li>
+      <li><div><span class="q">Why did I wake up late?</span> <span class="a">I hit snooze four times.</span></div></li>
+      <li><div><span class="q">Why did I hit snooze?</span> <span class="a">The blanket was warm and the world was cold.</span></div></li>
+      <li><div><span class="q">Why was the blanket so warm?</span> <span class="a">Thermodynamics.</span></div></li>
+      <li><div><span class="q">So is it the blanket's fault?</span> <span class="a">No. It's my fault. I just wanted it to be the blanket's fault.</span></div></li>
+    </ol>
+    <p class="verdict">ROOT CAUSE: me. CONTRIBUTING FACTOR: blanket (acquitted).</p>
+  </section>
+
+  <section aria-labelledby="vic-h" style="display:grid;gap:20px">
+    <div class="sheet-head">
+      <span class="label">Section 4 · Affected parties</span>
+      <h2 id="vic-h" style="font-family:var(--display);font-weight:800;font-size:clamp(26px,4.4vw,38px);margin:0;letter-spacing:-.02em">The two people I owe big time</h2>
+    </div>
+    <div class="victims">
+      <article class="victim">
+        <div class="victim-top">
+          <div class="avatar" aria-hidden="true">L</div>
+          <div><div class="victim-name">Luan</div><div class="victim-role">Senior Project Carrier</div></div>
+        </div>
+        <dl>
+          <div><dt>Status</dt><dd>Did my part and their part. Unpaid overtime.</dd></div>
+          <div><dt>Damage</dt><dd>Had to explain my section of the project to people without knowing what I was going to say. Respect.</dd></div>
+          <div><dt>Mood (estimated)</dt><dd>Calm on the outside. Planning my funeral on the inside.</dd></div>
+          <div><dt>Owed</dt><dd>One drink of their choice, full toppings, and a public "Luan was right."</dd></div>
+        </dl>
+      </article>
+      <article class="victim">
+        <div class="victim-top">
+          <div class="avatar" aria-hidden="true">HS</div>
+          <div><div class="victim-name">Hai Sex</div><div class="victim-role">Chief Waiting Officer</div></div>
+        </div>
+        <dl>
+          <div><dt>Status</dt><dd>Waited. Then waited more. Then stopped waiting and just did it.</dd></div>
+          <div><dt>Damage</dt><dd>Read my "omw" message and correctly did not believe it.</dd></div>
+          <div><dt>Mood (estimated)</dt><dd>Has already told at least one person about this. Fair.</dd></div>
+          <div><dt>Owed</dt><dd>One meal, my treat, any restaurant. Yes, even the expensive one.</dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="comp-h">
+    <div class="sheet-head">
+      <span class="label">Section 5 · Compensation package</span>
+      <h2 id="comp-h">Pick your apology bribes</h2>
+      <p>Tick whatever you want. I'll pay. No questions asked (some crying allowed).</p>
+    </div>
+    <div class="menu" role="group" aria-label="Compensation options">
+      <label class="item" for="c1"><input type="checkbox" id="c1" data-price="70000"><span class="what">Bubble tea × 2 <small>Full topping. 100% sugar if you want. I won't judge.</small></span><span class="price">70.000₫</span></label>
+      <label class="item" for="c2"><input type="checkbox" id="c2" data-price="60000"><span class="what">Bánh mì × 2 <small>Hand-delivered. On time, for once.</small></span><span class="price">60.000₫</span></label>
+      <label class="item" for="c3"><input type="checkbox" id="c3" data-price="300000"><span class="what">Hotpot dinner for three <small>You order. I watch my wallet cry.</small></span><span class="price">300.000₫</span></label>
+      <label class="item" for="c4"><input type="checkbox" id="c4" data-price="0"><span class="what">I do the next presentation slides <small>All of them. Even the boring ones.</small></span><span class="price">My soul</span></label>
+      <label class="item" for="c5"><input type="checkbox" id="c5" data-price="0"><span class="what">Carrying your bags for a day <small>Laptop bag included. Snacks included.</small></span><span class="price">Free</span></label>
+      <label class="item soldout" for="c6"><input type="checkbox" id="c6" disabled><span class="what"><span>A promise I'll never be late again</span> <small>Legally I cannot offer this. My lawyer (the blanket) advised against it.</small></span><span class="price">OUT OF STOCK</span></label>
+      <div class="total"><span class="label">Total damage to my wallet</span><span class="sum" id="sum">0₫</span></div>
+    </div>
+    <p class="wallet" id="wallet">My wallet is nervously watching.</p>
+  </section>
+
+  <section class="sheet forgive" aria-labelledby="fg-h">
+    <div class="sheet-head">
+      <span class="label">Section 6 · Resolution</span>
+      <h2 id="fg-h">The important question</h2>
+      <p>First, who is reading this?</p>
+    </div>
+    <div class="who" role="group" aria-label="Who is forgiving">
+      <button type="button" data-who="Luan" aria-pressed="true">I'm Luan</button>
+      <button type="button" data-who="Hai Sex" aria-pressed="false">I'm Hai Sex</button>
+      <button type="button" data-who="Luan &amp; Hai Sex" aria-pressed="false">We're both here</button>
+    </div>
+    <div class="arena" id="arena">
+      <div class="arena-q" id="askQ">Luan, do you forgive me?</div>
+      <button type="button" class="btn btn-yes" id="yesBtn">YES</button>
+      <button type="button" class="btn btn-no" id="noBtn">No</button>
+    </div>
+    <p class="no-log" id="noLog">Choose wisely. (There is only one choice.)</p>
+
+    <div id="certWrap" hidden>
+      <div class="cert" id="cert">
+        <span class="label">Official document · Incident #001</span>
+        <h3>Certificate of Forgiveness</h3>
+        <p>This certifies that</p>
+        <p class="big" id="certWho">Luan</p>
+        <p><span id="certVerb">has</span> officially forgiven their late friend for this morning's crimes against punctuality.</p>
+        <p class="terms">Valid for one (1) lateness only. Non-transferable. Does not cancel the bubble tea. Forgiveness may be revoked if I am late again, which, statistically, I will be.</p>
+        <div class="stamp" id="stamp">RESOLVED</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" aria-labelledby="act-h">
+    <div class="sheet-head">
+      <span class="label">Section 7 · Action items</span>
+      <h2 id="act-h">So this never happens again (probably)</h2>
+    </div>
+    <div class="scroll">
+      <table class="actions">
+        <thead><tr><th>Action</th><th>Owner</th></tr></thead>
+        <tbody>
+          <tr><td>Set 3 alarms. Put the phone across the room.</td><td>Me</td></tr>
+          <tr><td>Pay for everything ticked in Section 5.</td><td>Me (crying)</td></tr>
+          <tr><td>Do extra work on the project to make up for it.</td><td>Me</td></tr>
+          <tr><td>Tell everyone Luan and Hai Sex are the real MVPs.</td><td>Me</td></tr>
+          <tr><td>Stay a little mad, then let it go.</td><td>Luan &amp; Hai Sex (optional)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sign">You two are the best. Sorry again. Drinks are on me.</p>
+  </section>
+
+  <footer class="fine">Incident report v1.0 · No blankets were harmed in the making of this apology.</footer>
+</main>
+
+<div class="tape" aria-hidden="true"></div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* guilt meter */
+  var fill = document.getElementById('guiltFill'), pct = document.getElementById('guiltPct'),
+      note = document.getElementById('guiltNote'), bar = document.getElementById('guiltBar');
+  setTimeout(function () { fill.style.width = '100%'; }, 300);
+  var g = 0, target = 147;
+  var t = setInterval(function () {
+    g += 3; if (g >= target) { g = target; clearInterval(t); bar.classList.add('overflow');
+      note.textContent = 'ERROR: guilt exceeded maximum. Meter not built for this.'; }
+    pct.textContent = g + '%';
+  }, reduce ? 1 : 40);
+
+  /* compensation */
+  var boxes = document.querySelectorAll('.menu input:not([disabled])');
+  var sumEl = document.getElementById('sum'), wallet = document.getElementById('wallet');
+  var lines = ['My wallet is nervously watching.', 'My wallet felt that.', 'My wallet is sweating.',
+               'My wallet has left the chat.', 'My wallet is writing its own apology website.',
+               'Worth it. You two deserve everything.'];
+  function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '₫'; }
+  boxes.forEach(function (b) {
+    b.addEventListener('change', function () {
+      var s = 0, n = 0;
+      boxes.forEach(function (x) { if (x.checked) { s += +x.dataset.price; n++; } });
+      sumEl.textContent = fmt(s);
+      wallet.textContent = lines[Math.min(n, lines.length - 1)];
+    });
+  });
+
+  /* who */
+  var who = 'Luan';
+  var whoBtns = document.querySelectorAll('.who button');
+  var askQ = document.getElementById('askQ');
+  function decode(s) { var d = document.createElement('textarea'); d.innerHTML = s; return d.value; }
+  whoBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      whoBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true');
+      who = decode(b.dataset.who);
+      askQ.textContent = who + (who.indexOf('&') > -1 ? ', do you both forgive me?' : ', do you forgive me?');
+      document.getElementById('certWho').textContent = who;
+    });
+  });
+
+  /* runaway no */
+  var arena = document.getElementById('arena'), no = document.getElementById('noBtn'),
+      yes = document.getElementById('yesBtn'), log = document.getElementById('noLog');
+  var tries = 0;
+  var noTexts = ['No', 'Are you sure?', 'Really?', 'Think about the bubble tea', 'Hmm, button broken',
+                 'Try again maybe?', 'The hotpot though', 'pls', 'I am begging', 'This button is decorative'];
+  function pleaFor() {
+    var p = who === 'Luan' ? 'Luan pls' : who === 'Hai Sex' ? 'Hai Sex pls' : 'Both of you, pls';
+    return p;
+  }
+  function flee(e) {
+    if (e && e.type === 'touchstart') e.preventDefault();
+    tries++;
+    var a = arena.getBoundingClientRect(), b = no.getBoundingClientRect();
+    var maxX = a.width - b.width - 12, maxY = a.height - b.height - 12;
+    var x, y, tries2 = 0, yb = yes.getBoundingClientRect();
+    do {
+      x = 12 + Math.random() * Math.max(0, maxX - 12);
+      y = 12 + Math.random() * Math.max(0, maxY - 12);
+      tries2++;
+    } while (tries2 < 20 &&
+      x + a.left < yb.right + 10 && x + a.left + b.width > yb.left - 10 &&
+      y + a.top < yb.bottom + 10 && y + a.top + b.height > yb.top - 10);
+    no.style.left = x + 'px';
+    no.style.top = y + 'px';
+    var txt = tries % 4 === 0 ? pleaFor() : noTexts[Math.min(tries, noTexts.length - 1)];
+    no.textContent = txt;
+    var scale = Math.min(1 + tries * 0.12, 2.2);
+    yes.style.transform = 'scale(' + scale + ')';
+    no.style.fontSize = Math.max(18 - tries, 10) + 'px';
+    log.textContent = 'Attempts to say no: ' + tries + '. Attempts that worked: 0.';
+  }
+  no.addEventListener('mouseenter', flee);
+  no.addEventListener('touchstart', flee, { passive: false });
+  no.addEventListener('focus', flee);
+  no.addEventListener('click', function (e) { e.preventDefault(); flee(); });
+
+  yes.addEventListener('click', function () {
+    var wrap = document.getElementById('certWrap');
+    wrap.hidden = false;
+    document.getElementById('certWho').textContent = who;
+    document.getElementById('certVerb').textContent = who.indexOf('&') > -1 ? 'have' : 'has';
+    var s = document.getElementById('stamp'); s.classList.remove('slam'); void s.offsetWidth; s.classList.add('slam');
+    var pill = document.getElementById('sevPill');
+    pill.textContent = 'Resolved · Friendship restored';
+    pill.classList.add('resolved');
+    document.querySelector('.tape.moving').classList.remove('moving');
+    log.textContent = tries ? 'Took you ' + tries + ' tries to accept fate. Thank you!' : 'First try. Legend. Thank you!';
+    no.hidden = true;
+    yes.textContent = 'THANK YOU';
+    wrap.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    if (!reduce) confetti();
+  });
+
+  /* confetti */
+  function confetti() {
+    var c = document.getElementById('confetti'), ctx = c.getContext('2d');
+    var dpr = window.devicePixelRatio || 1;
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+    var colors = ['#FFD52E', '#16140F', '#E3342F', '#1E8E4E', '#FFFDF6'];
+    var parts = [];
+    for (var i = 0; i < 180; i++) parts.push({
+      x: innerWidth / 2, y: innerHeight * 0.55,
+      vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 6,
+      w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+      r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+      col: colors[i % colors.length]
+    });
+    var frame = 0;
+    (function tick() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      parts.forEach(function (p) {
+        p.vy += 0.4; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.fillStyle = p.col; ctx.strokeStyle = '#16140F'; ctx.lineWidth = 1;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (++frame < 220) requestAnimationFrame(tick); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })();
+  }
+})();
+</script>
+</body>
+</html>
